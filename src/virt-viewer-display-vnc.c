@@ -191,6 +191,8 @@ virt_viewer_display_vnc_new(VirtViewerSessionVnc *session,
      */
     vnc_display_set_force_size(display->priv->vnc, FALSE);
     vnc_display_set_scaling(display->priv->vnc, TRUE);
+    virt_viewer_display_set_show_hint(VIRT_VIEWER_DISPLAY(display),
+                                      VIRT_VIEWER_DISPLAY_SHOW_HINT_READY, TRUE);
 
     /* When VNC desktop resizes, we have to resize the containing widget */
     g_signal_connect(display->priv->vnc, "vnc-desktop-resize",
