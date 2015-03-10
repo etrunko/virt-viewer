@@ -815,7 +815,7 @@ static gboolean ovirt_foreign_menu_refresh_iso_list(gpointer user_data)
      * that function through iso_list_fetched_cb() when it has finished
      * fetching the iso list
      */
-    return G_SOURCE_REMOVE;
+    return FALSE;
 }
 
 
