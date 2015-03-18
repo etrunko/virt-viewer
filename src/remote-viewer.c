@@ -82,7 +82,7 @@ static OvirtVm * choose_vm(GtkWindow *main_window,
                            GError **error);
 #endif
 
-static gboolean remote_viewer_start(VirtViewerApp *self);
+static gboolean remote_viewer_start(VirtViewerApp *self, GError **error);
 #ifdef HAVE_SPICE_GTK
 static gboolean remote_viewer_activate(VirtViewerApp *self, GError **error);
 static void remote_viewer_window_added(VirtViewerApp *self, VirtViewerWindow *win);
@@ -177,7 +177,7 @@ remote_viewer_deactivated(VirtViewerApp *app, gboolean connect_error)
     RemoteViewerPrivate *priv = self->priv;
 
     if (connect_error && priv->open_recent_dialog) {
-        if (virt_viewer_app_start(app)) {
+        if (virt_viewer_app_start(app, NULL)) {
             return;
         }
     }
@@ -1188,7 +1188,7 @@ choose_vm(GtkWindow *main_window,
 #endif
 
 static gboolean
-remote_viewer_start(VirtViewerApp *app)
+remote_viewer_start(VirtViewerApp *app, GError **err)
 {
     g_return_val_if_fail(REMOTE_VIEWER_IS(app), FALSE);
 
@@ -1227,8 +1227,13 @@ remote_viewer_start(VirtViewerApp *app)
 retry_dialog:
         main_window = virt_viewer_app_get_main_window(app);
         if (priv->open_recent_dialog) {
-            if (connect_dialog(virt_viewer_window_get_window(main_window), &guri) != 0)
+            if (connect_dialog(virt_viewer_window_get_window(main_window), &guri) != 0) {
+                g_set_error_literal(&error,
+                            VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_CANCELLED,
+                            _("No connection was chosen"));
+                g_propagate_error(err, error);
                 return FALSE;
+            }
             g_object_set(app, "guri", guri, NULL);
         } else
             g_object_get(app, "guri", &guri, NULL);
@@ -1245,7 +1250,6 @@ retry_dialog:
             if (error) {
                 virt_viewer_app_simple_message_dialog(app, _("Invalid file %s"), guri);
                 g_warning("%s", error->message);
-                g_clear_error(&error);
                 goto cleanup;
             }
             g_object_get(G_OBJECT(vvfile), "type", &type, NULL);
@@ -1256,12 +1260,11 @@ retry_dialog:
 #ifdef HAVE_OVIRT
         if (g_strcmp0(type, "ovirt") == 0) {
             if (!create_ovirt_session(app, guri, &error)) {
-                if (error) {
+                if (error && !g_error_matches(error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_CANCELLED)) {
                     virt_viewer_app_simple_message_dialog(app,
                                                           _("Couldn't open oVirt session: %s"),
                                                           error->message);
                 }
-                g_clear_error(&error);
                 goto cleanup;
             }
         } else
@@ -1287,14 +1290,13 @@ retry_dialog:
                 _("Failed to initiate connection");
 
             virt_viewer_app_simple_message_dialog(app, msg);
-            g_clear_error(&error);
             goto cleanup;
         }
 #ifdef HAVE_SPICE_GTK
     }
 #endif
 
-    ret = VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app);
+    ret = VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, &error);
 
 cleanup:
     g_clear_object(&file);
@@ -1305,8 +1307,11 @@ cleanup:
     type = NULL;
 
     if (!ret && priv->open_recent_dialog) {
+        g_clear_error(&error);
         goto retry_dialog;
     }
+    if (error != NULL)
+        g_propagate_error(err, error);
 
     return ret;
 }
