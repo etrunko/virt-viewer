@@ -1207,7 +1207,7 @@ remote_viewer_start(VirtViewerApp *app)
 
     if (priv->controller) {
         if (!virt_viewer_app_create_session(app, "spice", &error)) {
-            virt_viewer_app_simple_message_dialog(app, _("Couldn't create a Spice session"));
+            g_debug("Couldn't create a Spice session");
             goto cleanup;
         }
 
