@@ -43,6 +43,9 @@
 #include "virt-viewer-app.h"
 #include "virt-viewer-util.h"
 #include "view/autoDrawer.h"
+#ifdef HAVE_GTK_VNC
+#include "virt-viewer-display-vnc.h"
+#endif
 
 /* Signal handlers for main window (move in a VirtViewerMainWindow?) */
 void virt_viewer_window_menu_view_zoom_out(GtkWidget *menu, VirtViewerWindow *self);
@@ -1516,6 +1519,10 @@ virt_viewer_window_get_minimal_zoom_level(VirtViewerWindow *self)
 
     g_return_val_if_fail(VIRT_VIEWER_IS_WINDOW(self) &&
                          self->priv->display != NULL, MIN_ZOOM_LEVEL);
+#ifdef HAVE_GTK_VNC
+    if (VIRT_VIEWER_IS_DISPLAY_VNC(self->priv->display))
+        return MIN_ZOOM_LEVEL;
+#endif
 
     virt_viewer_window_get_minimal_dimensions(self, &min_width, &min_height);
     virt_viewer_display_get_desktop_size(virt_viewer_window_get_display(self), &width, &height);
