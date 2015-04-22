@@ -100,6 +100,7 @@ void virt_viewer_app_clear_hotkeys(VirtViewerApp *app);
 GList* virt_viewer_app_get_initial_displays(VirtViewerApp* self);
 gint virt_viewer_app_get_initial_monitor_for_display(VirtViewerApp* self, gint display);
 void virt_viewer_app_set_enable_accel(VirtViewerApp *app, gboolean enable);
+void virt_viewer_app_set_menus_sensitive(VirtViewerApp *self, gboolean sensitive);
 
 G_END_DECLS
 
