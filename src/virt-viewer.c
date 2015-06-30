@@ -966,6 +966,10 @@ virt_viewer_connect(VirtViewerApp *app)
         g_debug("Unable to register close callback on libvirt connection");
     }
 
+    if (virConnectSetKeepAlive(priv->conn, 5, 3) < 0) {
+        g_debug("Unable to set keep alive");
+    }
+
     return 0;
 }
 
