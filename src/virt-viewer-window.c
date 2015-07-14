@@ -67,7 +67,7 @@ void virt_viewer_window_menu_view_release_cursor(GtkWidget *menu, VirtViewerWind
 /* Internal methods */
 static void virt_viewer_window_enable_modifiers(VirtViewerWindow *self);
 static void virt_viewer_window_disable_modifiers(VirtViewerWindow *self);
-static void virt_viewer_window_resize(VirtViewerWindow *self, gboolean keep_win_size);
+static void virt_viewer_window_resize(VirtViewerWindow *self);
 static void virt_viewer_window_toolbar_setup(VirtViewerWindow *self);
 static GtkMenu* virt_viewer_window_get_keycombo_menu(VirtViewerWindow *self);
 static void virt_viewer_window_get_minimal_dimensions(VirtViewerWindow *self, guint *width, guint *height);
@@ -364,7 +364,7 @@ virt_viewer_window_desktop_resize(VirtViewerDisplay *display G_GNUC_UNUSED,
         self->priv->desktop_resize_pending = TRUE;
         return;
     }
-    virt_viewer_window_resize(self, FALSE);
+    virt_viewer_window_resize(self);
 }
 
 
@@ -412,7 +412,7 @@ virt_viewer_window_queue_resize(VirtViewerWindow *self)
  * scale down to fit, maintaining aspect ratio
  */
 static void
-virt_viewer_window_resize(VirtViewerWindow *self, gboolean keep_win_size)
+virt_viewer_window_resize(VirtViewerWindow *self)
 {
     GdkRectangle fullscreen;
     GdkScreen *screen;
@@ -475,8 +475,7 @@ virt_viewer_window_resize(VirtViewerWindow *self, gboolean keep_win_size)
     virt_viewer_display_set_desktop_size(VIRT_VIEWER_DISPLAY(priv->display),
                                          width, height);
 
-    if (!keep_win_size)
-        virt_viewer_window_queue_resize(self);
+    virt_viewer_window_queue_resize(self);
 }
 
 static void
@@ -1374,7 +1373,7 @@ virt_viewer_window_show(VirtViewerWindow *self)
     gtk_widget_show(self->priv->window);
 
     if (self->priv->desktop_resize_pending) {
-        virt_viewer_window_resize(self, FALSE);
+        virt_viewer_window_resize(self);
         self->priv->desktop_resize_pending = FALSE;
     }
 
