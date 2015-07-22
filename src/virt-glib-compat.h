@@ -71,6 +71,10 @@ G_BEGIN_DECLS
 GByteArray *g_byte_array_new_take (guint8 *data, gsize len);
 #endif
 
+#if GLIB_CHECK_VERSION(2,31,0)
+#define g_mutex_new() g_new0(GMutex, 1)
+#endif
+
 G_END_DECLS
 
 #endif // _VIRT_GLIB_COMPAT_H
