@@ -15,6 +15,7 @@ noinst_DATA = \
 	resources/ui/remote-viewer-connect.ui \
 	resources/ui/remote-viewer-iso-list.ui \
 	resources/ui/virt-viewer-file-transfer-dialog.ui \
+	resources/gtk/menus.ui \
 	$(NULL)
 
 EXTRA_DIST =					\
