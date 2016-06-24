@@ -1763,6 +1763,8 @@ static void
 virt_viewer_update_smartcard_accels(VirtViewerApp *self)
 {
     gboolean sw_smartcard;
+    gchar *insert_accel;
+    gchar *remove_accel;
     VirtViewerAppPrivate *priv = self->priv;
 
     if (self->priv->session != NULL) {
@@ -1774,18 +1776,21 @@ virt_viewer_update_smartcard_accels(VirtViewerApp *self)
     }
     if (sw_smartcard) {
         g_debug("enabling smartcard shortcuts");
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert",
-                                   priv->insert_smartcard_accel_key,
-                                   priv->insert_smartcard_accel_mods,
-                                   TRUE);
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove",
-                                   priv->remove_smartcard_accel_key,
-                                   priv->remove_smartcard_accel_mods,
-                                   TRUE);
+        insert_accel = gtk_accelerator_get_label(priv->insert_smartcard_accel_key,
+                                                 priv->insert_smartcard_accel_mods);
+        remove_accel = gtk_accelerator_get_label(priv->remove_smartcard_accel_key,
+                                                 priv->remove_smartcard_accel_mods);
+
+        const gchar *insert_accels[] = { insert_accel, NULL };
+        const gchar *remove_accels[] = { remove_accel, NULL };
+
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.smartcard-insert", insert_accels);
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.smartcard-remove", remove_accels);
     } else {
         g_debug("disabling smartcard shortcuts");
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert", 0, 0, TRUE);
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove", 0, 0, TRUE);
+        const gchar *accels[] = { NULL };
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.smartcard-insert", accels);
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.smartcard-remove", accels);
     }
 }
 
@@ -1860,9 +1865,30 @@ static GActionEntry app_entries[] =
     {"quit", quit_activated, NULL, NULL, NULL, {0,0,0} }
 };
 
+#define MAX_KEY_COMBO 3
+struct keyComboDef {
+    const char *action_name;
+    const char *keys[MAX_KEY_COMBO];
+};
+
+static const struct keyComboDef accel_keyCombos[] = {
+    { "win.fullscreen", {"F11", NULL, NULL} },
+    { "win.zoom-in", {"<Ctrl>plus", "<Ctrl>KP_Add", NULL} },
+    { "win.zoom-out", {"<Ctrl>minus", "<Ctrl>KP_Subtract", NULL} },
+    { "win.zoom-reset", {"<Ctrl>0", "<Ctrl>KP_0", NULL} }
+};
+
+static const struct keyComboDef enable_accel_keyCombos[] = {
+    { "win.release-cursor", {"<Shift>F12", NULL, NULL} },
+    { "win.smartcard-insert", {"<Shift>F8", NULL, NULL} },
+    { "win.smartcard-remove", {"<Shift>F9", NULL, NULL} },
+    { "win.secure-attention", {"<Ctrl><Alt>End", NULL, NULL} }
+};
+
 static void
 virt_viewer_app_on_application_startup(GApplication *app)
 {
+    gint i;
     VirtViewerApp *self = VIRT_VIEWER_APP(app);
     GError *error = NULL;
 
@@ -1873,6 +1899,11 @@ virt_viewer_app_on_application_startup(GApplication *app)
     g_action_map_add_action_entries(G_ACTION_MAP(app),
                                     app_entries, G_N_ELEMENTS(app_entries),
                                     app);
+
+    for (i = 0 ; i < G_N_ELEMENTS(accel_keyCombos); i++) {
+        gtk_application_set_accels_for_action(GTK_APPLICATION(app),
+                                              accel_keyCombos[i].action_name, accel_keyCombos[i].keys);
+    }
 
     self->priv->resource = virt_viewer_get_resource();
 
@@ -1894,16 +1925,12 @@ virt_viewer_app_on_application_startup(GApplication *app)
         opt_zoom = NORMAL_ZOOM_LEVEL;
     }
 
-    virt_viewer_window_set_zoom_level(self->priv->main_window, opt_zoom);
+    for (i = 0 ; i < G_N_ELEMENTS(enable_accel_keyCombos); i++) {
+        gtk_application_set_accels_for_action(GTK_APPLICATION(app),
+                                              enable_accel_keyCombos[i].action_name, enable_accel_keyCombos[i].keys);
+    }
 
-    virt_viewer_set_insert_smartcard_accel(self, GDK_KEY_F8, GDK_SHIFT_MASK);
-    virt_viewer_set_remove_smartcard_accel(self, GDK_KEY_F9, GDK_SHIFT_MASK);
-    gtk_accel_map_add_entry("<virt-viewer>/view/toggle-fullscreen", GDK_KEY_F11, 0);
-    gtk_accel_map_add_entry("<virt-viewer>/view/release-cursor", GDK_KEY_F12, GDK_SHIFT_MASK);
-    gtk_accel_map_add_entry("<virt-viewer>/view/zoom-reset", GDK_KEY_0, GDK_CONTROL_MASK);
-    gtk_accel_map_add_entry("<virt-viewer>/view/zoom-out", GDK_KEY_minus, GDK_CONTROL_MASK);
-    gtk_accel_map_add_entry("<virt-viewer>/view/zoom-in", GDK_KEY_plus, GDK_CONTROL_MASK);
-    gtk_accel_map_add_entry("<virt-viewer>/send/secure-attention", GDK_KEY_End, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+    virt_viewer_window_set_zoom_level(self->priv->main_window, opt_zoom);
 
     if (!virt_viewer_app_start(self, &error)) {
         if (error && !g_error_matches(error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_CANCELLED))
@@ -2113,13 +2140,17 @@ gboolean virt_viewer_app_get_direct(VirtViewerApp *self)
 void
 virt_viewer_app_clear_hotkeys(VirtViewerApp *self)
 {
+    gint i;
+    const gchar *accels[] = { NULL };
     /* Disable default bindings and replace them with our own */
-    gtk_accel_map_change_entry("<virt-viewer>/view/toggle-fullscreen", 0, 0, TRUE);
-    gtk_accel_map_change_entry("<virt-viewer>/view/release-cursor", 0, 0, TRUE);
-    gtk_accel_map_change_entry("<virt-viewer>/view/zoom-reset", 0, 0, TRUE);
-    gtk_accel_map_change_entry("<virt-viewer>/view/zoom-in", 0, 0, TRUE);
-    gtk_accel_map_change_entry("<virt-viewer>/view/zoom-out", 0, 0, TRUE);
-    gtk_accel_map_change_entry("<virt-viewer>/send/secure-attention", 0, 0, TRUE);
+    for (i = 0 ; i < G_N_ELEMENTS(accel_keyCombos); i++) {
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), accel_keyCombos[i].action_name, accels);
+    }
+
+    for (i = 0 ; i < G_N_ELEMENTS(enable_accel_keyCombos); i++) {
+        gtk_application_set_accels_for_action(GTK_APPLICATION(self), enable_accel_keyCombos[i].action_name, accels);
+    }
+
     virt_viewer_set_insert_smartcard_accel(self, 0, 0);
     virt_viewer_set_remove_smartcard_accel(self, 0, 0);
 }
@@ -2161,7 +2192,8 @@ virt_viewer_app_set_hotkeys(VirtViewerApp *self, const gchar *hotkeys_str)
         guint accel_key;
         GdkModifierType accel_mods;
         gtk_accelerator_parse(accel, &accel_key, &accel_mods);
-        g_free(accel);
+
+        const gchar *accels[] = { accel, NULL };
 
         if (accel_key == 0 && accel_mods == 0) {
             g_warning("Invalid value '%s' for key '%s'", value, *hotkey);
@@ -2169,11 +2201,11 @@ virt_viewer_app_set_hotkeys(VirtViewerApp *self, const gchar *hotkeys_str)
         }
 
         if (g_str_equal(*hotkey, "toggle-fullscreen")) {
-            gtk_accel_map_change_entry("<virt-viewer>/view/toggle-fullscreen", accel_key, accel_mods, TRUE);
+            gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.fullscreen", accels);
         } else if (g_str_equal(*hotkey, "release-cursor")) {
-            gtk_accel_map_change_entry("<virt-viewer>/view/release-cursor", accel_key, accel_mods, TRUE);
+            gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.release-cursor", accels);
         } else if (g_str_equal(*hotkey, "secure-attention")) {
-            gtk_accel_map_change_entry("<virt-viewer>/send/secure-attention", accel_key, accel_mods, TRUE);
+            gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.secure-attention", accels);
         } else if (g_str_equal(*hotkey, "smartcard-insert")) {
             virt_viewer_set_insert_smartcard_accel(self, accel_key, accel_mods);
         } else if (g_str_equal(*hotkey, "smartcard-remove")) {
@@ -2181,6 +2213,8 @@ virt_viewer_app_set_hotkeys(VirtViewerApp *self, const gchar *hotkeys_str)
         } else {
             g_warning("Unknown hotkey command %s", *hotkey);
         }
+
+        g_free(accel);
     }
     g_strfreev(hotkeys);
 
@@ -2286,23 +2320,29 @@ virt_viewer_app_set_fullscreen(VirtViewerApp *self, gboolean fullscreen)
 }
 
 static void
-menu_display_visible_toggled_cb(GtkCheckMenuItem *checkmenuitem,
-                                VirtViewerDisplay *display)
+menu_display_visible_toggled_cb(GSimpleAction *action,
+                                GVariant *parameter G_GNUC_UNUSED,
+                                gpointer data)
 {
+    VirtViewerDisplay *display = data;
     VirtViewerApp *self = virt_viewer_session_get_app(virt_viewer_display_get_session(display));
-    gboolean visible = gtk_check_menu_item_get_active(checkmenuitem);
+    GVariant *state = g_action_get_state(G_ACTION(action));;
+    gboolean visible;
     static gboolean reentering = FALSE;
     VirtViewerWindow *vwin;
 
+    g_return_if_fail(state != NULL);
     if (reentering) /* do not reenter if I switch you back */
         return;
 
     reentering = TRUE;
 
+    visible = !g_variant_get_boolean(state);
+
     vwin = ensure_window_for_display(self, display);
     visible = virt_viewer_app_window_set_visible(self, vwin, visible);
 
-    gtk_check_menu_item_set_active(checkmenuitem, /* will be toggled again */ !visible);
+    g_action_change_state(G_ACTION(action), g_variant_new_boolean(visible));
     reentering = FALSE;
 
     virt_viewer_session_update_displays_geometry(virt_viewer_display_get_session(display));
@@ -2322,48 +2362,19 @@ update_menu_displays_sort(gconstpointer a, gconstpointer b)
         return 0;
 }
 
-static GtkMenuShell *
-window_empty_display_submenu(VirtViewerWindow *window)
-{
-    /* Because of what apparently is a gtk+2 bug (rhbz#922712), we
-     * cannot recreate the submenu every time we need to refresh it,
-     * otherwise the application may get frozen with the keyboard and
-     * mouse grabbed if gtk_menu_item_set_submenu is called while
-     * the menu is displayed. Reusing the same menu every time
-     * works around this issue.
-     */
-    GtkMenuItem *menu = virt_viewer_window_get_menu_displays(window);
-    GtkMenuShell *submenu;
-
-    submenu = GTK_MENU_SHELL(gtk_menu_item_get_submenu(menu));
-    if (submenu) {
-        GList *subitems;
-        GList *it;
-        subitems = gtk_container_get_children(GTK_CONTAINER(submenu));
-        for (it = subitems; it != NULL; it = it->next) {
-            gtk_container_remove(GTK_CONTAINER(submenu), GTK_WIDGET(it->data));
-        }
-        g_list_free(subitems);
-    } else {
-        submenu = GTK_MENU_SHELL(gtk_menu_new());
-        gtk_menu_item_set_submenu(menu, GTK_WIDGET(submenu));
-    }
-
-    return submenu;
-}
-
 static void
 window_update_menu_displays_cb(gpointer value,
                                gpointer user_data)
 {
     VirtViewerApp *self = VIRT_VIEWER_APP(user_data);
-    GtkMenuShell *submenu;
     GList *keys = g_hash_table_get_keys(self->priv->displays);
     GList *tmp;
+    GMenu *menu;
     gboolean sensitive;
 
     keys = g_list_sort(keys, update_menu_displays_sort);
-    submenu = window_empty_display_submenu(VIRT_VIEWER_WINDOW(value));
+    menu = g_menu_new();
+    GtkMenuButton *button = virt_viewer_window_get_menu_button_displays(VIRT_VIEWER_WINDOW(value));
 
     sensitive = (keys != NULL);
     virt_viewer_window_set_menu_displays_sensitive(VIRT_VIEWER_WINDOW(value), sensitive);
@@ -2373,16 +2384,28 @@ window_update_menu_displays_cb(gpointer value,
         int nth = GPOINTER_TO_INT(tmp->data);
         VirtViewerWindow *vwin = virt_viewer_app_get_nth_window(self, nth);
         VirtViewerDisplay *display = VIRT_VIEWER_DISPLAY(g_hash_table_lookup(self->priv->displays, tmp->data));
-        GtkWidget *item;
+        GMenuItem *item;
+        gchar *acname;
+        gchar *acfullname;
+        GSimpleAction *action;
+        GAction *act;
         gboolean visible;
         gchar *label;
 
-        label = g_strdup_printf(_("Display _%d"), nth + 1);
-        item = gtk_check_menu_item_new_with_mnemonic(label);
-        g_free(label);
-
         visible = vwin && gtk_widget_get_visible(GTK_WIDGET(virt_viewer_window_get_window(vwin)));
-        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), visible);
+
+        acname = g_strdup_printf ("display-action-%d", nth + 1);
+        action = g_simple_action_new_stateful(acname, NULL, g_variant_new_boolean(visible));
+
+        label = g_strdup_printf(_("Display _%d"), nth + 1);
+        acfullname = g_strdup_printf ("app.%s", acname);
+        item = g_menu_item_new(label, acfullname);
+        g_free(label);
+        g_free(acfullname);
+
+        g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (action));
+        act = g_action_map_lookup_action (G_ACTION_MAP (self), acname);
+        g_action_change_state(G_ACTION(action), g_variant_new_boolean(visible));
 
         sensitive = visible;
         if (display) {
@@ -2394,15 +2417,17 @@ window_update_menu_displays_cb(gpointer value,
             if (virt_viewer_display_get_selectable(display))
                 sensitive = TRUE;
         }
-        gtk_widget_set_sensitive(item, sensitive);
 
-        virt_viewer_signal_connect_object(G_OBJECT(item), "toggled",
+        g_simple_action_set_enabled(G_SIMPLE_ACTION(act), sensitive);
+        virt_viewer_signal_connect_object(G_OBJECT(action), "activate",
                                           G_CALLBACK(menu_display_visible_toggled_cb), display, 0);
-        gtk_menu_shell_append(submenu, item);
+        g_object_unref (action);
+
+        g_menu_append_item(menu, item);
         tmp = tmp->next;
     }
 
-    gtk_widget_show_all(GTK_WIDGET(submenu));
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (button), G_MENU_MODEL(menu));
     g_list_free(keys);
 }
 

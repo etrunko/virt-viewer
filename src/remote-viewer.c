@@ -773,9 +773,11 @@ ovirt_foreign_menu_update(GtkApplication *gtkapp, GtkWindow *gtkwin, G_GNUC_UNUS
 {
     RemoteViewer *self = REMOTE_VIEWER(gtkapp);
     VirtViewerWindow *win = g_object_get_data(G_OBJECT(gtkwin), "virt-viewer-window");
-    GtkBuilder *builder = virt_viewer_window_get_builder(win);
-    GtkWidget *menu = GTK_WIDGET(gtk_builder_get_object(builder, "menu-change-cd"));
-    gtk_widget_set_visible(menu, self->priv->ovirt_foreign_menu != NULL);
+    GtkButton *button = virt_viewer_window_get_button_change_cd(win);
+    gboolean has_ovirt_foreign_menu = self->priv->ovirt_foreign_menu != NULL;
+
+    gtk_widget_set_sensitive(GTK_WIDGET(button), has_ovirt_foreign_menu);
+    gtk_widget_set_visible(GTK_WIDGET(button), has_ovirt_foreign_menu);
 }
 
 static void
