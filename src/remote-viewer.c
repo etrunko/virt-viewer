@@ -1098,7 +1098,7 @@ connect_dialog(GtkWindow *main_window, gchar **uri)
     gtk_container_set_border_width(GTK_CONTAINER(box), 5);
     gtk_box_pack_start(GTK_BOX(area), box, TRUE, TRUE, 0);
 
-    label = gtk_label_new_with_mnemonic(_("_Connection Address"));
+    label = gtk_label_new_with_mnemonic(_("Connection _Address"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
     entry = GTK_WIDGET(gtk_entry_new());
