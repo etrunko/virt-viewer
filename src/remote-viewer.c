@@ -1123,7 +1123,7 @@ connect_dialog(GtkWindow *main_window, gchar **uri)
     gtk_box_pack_start(GTK_BOX(box), alignment, TRUE, TRUE, 0);
 #endif
 
-    label = gtk_label_new_with_mnemonic(_("_Recent Connections"));
+    label = gtk_label_new(_("Recent Connections"));
     make_label_bold(GTK_LABEL(label));
     gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
