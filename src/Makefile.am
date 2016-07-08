@@ -13,6 +13,7 @@ noinst_DATA = \
 	resources/ui/virt-viewer-vm-connection.ui \
 	resources/ui/virt-viewer-preferences.ui \
 	resources/ui/remote-viewer-connect.ui \
+	resources/ui/remote-viewer-iso-list.ui \
 	$(NULL)
 
 EXTRA_DIST =					\
@@ -96,6 +97,8 @@ if HAVE_OVIRT
 libvirt_viewer_la_SOURCES += \
 	ovirt-foreign-menu.h \
 	ovirt-foreign-menu.c \
+	remote-viewer-iso-list-dialog.c \
+	remote-viewer-iso-list-dialog.h \
 	$(NULL)
 endif
 
