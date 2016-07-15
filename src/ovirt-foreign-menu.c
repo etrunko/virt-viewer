@@ -375,22 +375,24 @@ static void updated_cdrom_cb(GObject *source_object,
         g_free(foreign_menu->priv->current_iso_name);
         foreign_menu->priv->current_iso_name = foreign_menu->priv->next_iso_name;
         foreign_menu->priv->next_iso_name = NULL;
-        g_object_notify(G_OBJECT(foreign_menu), "file");
-    } else {
-        /* Reset old state back as we were not successful in switching to
-         * the new ISO */
-        const char *current_file = foreign_menu->priv->current_iso_name;
-
-        if (error != NULL) {
-            g_warning("failed to update cdrom resource: %s", error->message);
-            g_clear_error(&error);
-        }
-        g_debug("setting OvirtCdrom:file back to '%s'",
-                current_file?current_file:NULL);
-        g_object_set(foreign_menu->priv->cdrom, "file", current_file, NULL);
+        goto end;
     }
 
+    /* Reset old state back as we were not successful in switching to
+     * the new ISO */
+    if (error != NULL) {
+        g_warning("failed to update cdrom resource: %s", error->message);
+        g_clear_error(&error);
+    }
+    g_debug("setting OvirtCdrom:file back to '%s'",
+            foreign_menu->priv->current_iso_name);
+    g_object_set(foreign_menu->priv->cdrom,
+                 "file", foreign_menu->priv->current_iso_name,
+                 NULL);
     g_clear_pointer(&foreign_menu->priv->next_iso_name, g_free);
+
+end:
+    g_object_notify(G_OBJECT(foreign_menu), "file");
 }
 
 
@@ -399,7 +401,6 @@ static void ovirt_foreign_menu_set_files(OvirtForeignMenu *menu,
 {
     GList *sorted_files = NULL;
     const GList *it;
-    GList *it2;
 
     for (it = files; it != NULL; it = it->next) {
         char *name;
@@ -414,20 +415,6 @@ static void ovirt_foreign_menu_set_files(OvirtForeignMenu *menu,
         }
         sorted_files = g_list_insert_sorted(sorted_files, name,
                                             (GCompareFunc)g_strcmp0);
-    }
-
-    for (it = sorted_files, it2 = menu->priv->iso_names;
-         (it != NULL) && (it2 != NULL);
-         it = it->next, it2 = it2->next) {
-        if (g_strcmp0(it->data, it2->data) != 0) {
-            break;
-        }
-    }
-
-    if ((it == NULL) && (it2 == NULL)) {
-        /* sorted_files and menu->priv->files content was the same */
-        g_list_free_full(sorted_files, (GDestroyNotify)g_free);
-        return;
     }
 
     g_list_free_full(menu->priv->iso_names, (GDestroyNotify)g_free);
