@@ -46,7 +46,7 @@ static void ovirt_foreign_menu_fetch_vm_async(OvirtForeignMenu *menu);
 static void ovirt_foreign_menu_fetch_storage_domain_async(OvirtForeignMenu *menu);
 static void ovirt_foreign_menu_fetch_vm_cdrom_async(OvirtForeignMenu *menu);
 static void ovirt_foreign_menu_refresh_cdrom_file_async(OvirtForeignMenu *menu);
-static gboolean ovirt_foreign_menu_refresh_iso_list(gpointer user_data);
+static void ovirt_foreign_menu_fetch_iso_list_async(OvirtForeignMenu *menu);
 
 G_DEFINE_TYPE (OvirtForeignMenu, ovirt_foreign_menu, G_TYPE_OBJECT)
 
@@ -313,7 +313,7 @@ ovirt_foreign_menu_next_async_step(OvirtForeignMenu *menu,
         g_warn_if_fail(menu->priv->files != NULL);
         g_warn_if_fail(menu->priv->cdrom != NULL);
 
-        ovirt_foreign_menu_refresh_iso_list(menu);
+        ovirt_foreign_menu_fetch_iso_list_async(menu);
         break;
     default:
         g_warn_if_reached();
@@ -754,8 +754,6 @@ static void iso_list_fetched_cb(GObject *source_object,
     files = g_hash_table_get_values(ovirt_collection_get_resources(collection));
     ovirt_foreign_menu_set_files(OVIRT_FOREIGN_MENU(user_data), files);
     g_list_free(files);
-
-    g_timeout_add_seconds(300, ovirt_foreign_menu_refresh_iso_list, user_data);
 }
 
 
@@ -765,24 +763,9 @@ static void ovirt_foreign_menu_fetch_iso_list_async(OvirtForeignMenu *menu)
         return;
     }
 
+    g_debug("Refreshing foreign menu iso list");
     ovirt_collection_fetch_async(menu->priv->files, menu->priv->proxy,
                                  NULL, iso_list_fetched_cb, menu);
-}
-
-
-static gboolean ovirt_foreign_menu_refresh_iso_list(gpointer user_data)
-{
-    OvirtForeignMenu *menu;
-
-    g_debug("Refreshing foreign menu iso list");
-    menu = OVIRT_FOREIGN_MENU(user_data);
-    ovirt_foreign_menu_fetch_iso_list_async(menu);
-
-    /* ovirt_foreign_menu_fetch_iso_list_async() will schedule a new call to
-     * that function through iso_list_fetched_cb() when it has finished
-     * fetching the iso list
-     */
-    return G_SOURCE_REMOVE;
 }
 
 
