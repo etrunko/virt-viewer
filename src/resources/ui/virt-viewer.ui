@@ -78,6 +78,7 @@
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">_Change CD</property>
                             <property name="use_underline">True</property>
+                            <signal name="activate" handler="virt_viewer_window_menu_change_cd_activate" swapped="no"/>
                           </object>
                         </child>
                         <child>
