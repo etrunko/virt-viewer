@@ -24,6 +24,7 @@
 
 #include "remote-viewer-iso-list-dialog.h"
 #include "virt-viewer-util.h"
+#include "ovirt-foreign-menu.h"
 
 G_DEFINE_TYPE(RemoteViewerISOListDialog, remote_viewer_iso_list_dialog, GTK_TYPE_DIALOG)
 
@@ -33,11 +34,16 @@ G_DEFINE_TYPE(RemoteViewerISOListDialog, remote_viewer_iso_list_dialog, GTK_TYPE
 struct _RemoteViewerISOListDialogPrivate
 {
     GtkWidget *stack;
+    OvirtForeignMenu *foreign_menu;
 };
 
 static void
 remote_viewer_iso_list_dialog_dispose(GObject *object)
 {
+    RemoteViewerISOListDialog *self = REMOTE_VIEWER_ISO_LIST_DIALOG(object);
+    RemoteViewerISOListDialogPrivate *priv = self->priv;
+
+    g_clear_object(&priv->foreign_menu);
     G_OBJECT_CLASS(remote_viewer_iso_list_dialog_parent_class)->dispose(object);
 }
 
@@ -94,13 +100,22 @@ remote_viewer_iso_list_dialog_init(RemoteViewerISOListDialog *self)
 }
 
 GtkWidget *
-remote_viewer_iso_list_dialog_new(GtkWindow *parent)
+remote_viewer_iso_list_dialog_new(GtkWindow *parent, GObject *foreign_menu)
 {
-    return g_object_new(REMOTE_VIEWER_TYPE_ISO_LIST_DIALOG,
-                        "title", _("Change CD"),
-                        "transient-for", parent,
-                        "border-width", 18,
-                        "default-width", 400,
-                        "default-height", 300,
-                        NULL);
+    GtkWidget *dialog;
+    RemoteViewerISOListDialog *self;
+
+    g_return_val_if_fail(foreign_menu != NULL, NULL);
+
+    dialog = g_object_new(REMOTE_VIEWER_TYPE_ISO_LIST_DIALOG,
+                          "title", _("Change CD"),
+                          "transient-for", parent,
+                          "border-width", 18,
+                          "default-width", 400,
+                          "default-height", 300,
+                          NULL);
+
+    self = REMOTE_VIEWER_ISO_LIST_DIALOG(dialog);
+    self->priv->foreign_menu = OVIRT_FOREIGN_MENU(g_object_ref(foreign_menu));
+    return dialog;
 }

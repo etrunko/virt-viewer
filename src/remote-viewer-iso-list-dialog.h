@@ -51,7 +51,7 @@ struct _RemoteViewerISOListDialogClass
 
 GType remote_viewer_iso_list_dialog_get_type(void) G_GNUC_CONST;
 
-GtkWidget *remote_viewer_iso_list_dialog_new(GtkWindow *parent);
+GtkWidget *remote_viewer_iso_list_dialog_new(GtkWindow *parent, GObject *foreign_menu);
 
 G_END_DECLS
 
