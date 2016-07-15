@@ -47,6 +47,7 @@ static void ovirt_foreign_menu_fetch_storage_domain_async(OvirtForeignMenu *menu
 static void ovirt_foreign_menu_fetch_vm_cdrom_async(OvirtForeignMenu *menu);
 static void ovirt_foreign_menu_refresh_cdrom_file_async(OvirtForeignMenu *menu);
 static void ovirt_foreign_menu_fetch_iso_list_async(OvirtForeignMenu *menu);
+static void updated_cdrom_cb(GObject *source_object, GAsyncResult *result, gpointer user_data);
 
 G_DEFINE_TYPE (OvirtForeignMenu, ovirt_foreign_menu, G_TYPE_OBJECT)
 
@@ -85,7 +86,7 @@ enum {
 };
 
 
-static char *
+char *
 ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *foreign_menu)
 {
     char *name;
@@ -97,6 +98,36 @@ ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *foreign_menu)
     g_object_get(foreign_menu->priv->cdrom, "file", &name, NULL);
 
     return name;
+}
+
+
+void
+ovirt_foreign_menu_set_current_iso_name(OvirtForeignMenu *foreign_menu, char *name)
+{
+    g_return_if_fail(foreign_menu->priv->cdrom != NULL);
+    g_return_if_fail(foreign_menu->priv->next_iso_name == NULL);
+
+    if (name) {
+        g_debug("Updating VM cdrom image to '%s'", name);
+        foreign_menu->priv->next_iso_name = g_strdup(name);
+    } else {
+        g_debug("Removing current cdrom image");
+        foreign_menu->priv->next_iso_name = NULL;
+    }
+
+    g_object_set(foreign_menu->priv->cdrom,
+                 "file", name,
+                 NULL);
+    ovirt_cdrom_update_async(foreign_menu->priv->cdrom, TRUE,
+                             foreign_menu->priv->proxy, NULL,
+                             updated_cdrom_cb, foreign_menu);
+}
+
+
+GList*
+ovirt_foreign_menu_get_iso_names(OvirtForeignMenu *foreign_menu)
+{
+    return foreign_menu->priv->iso_names;
 }
 
 
@@ -383,7 +414,7 @@ static void
 ovirt_foreign_menu_activate_item_cb(GtkMenuItem *menuitem, gpointer user_data)
 {
     OvirtForeignMenu *foreign_menu;
-    const char *iso_name;
+    const char *iso_name = NULL;
     gboolean checked;
 
     checked = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
@@ -403,19 +434,9 @@ ovirt_foreign_menu_activate_item_cb(GtkMenuItem *menuitem, gpointer user_data)
 
     if (checked) {
         iso_name = gtk_menu_item_get_label(menuitem);
-        g_debug("Updating VM cdrom image to '%s'", iso_name);
-        foreign_menu->priv->next_iso_name = g_strdup(iso_name);
-    } else {
-        g_debug("Removing current cdrom image");
-        iso_name = NULL;
-        foreign_menu->priv->next_iso_name = NULL;
     }
-    g_object_set(foreign_menu->priv->cdrom,
-                 "file", iso_name,
-                 NULL);
-    ovirt_cdrom_update_async(foreign_menu->priv->cdrom, TRUE,
-                             foreign_menu->priv->proxy, NULL,
-                             updated_cdrom_cb, foreign_menu);
+
+    ovirt_foreign_menu_set_current_iso_name(foreign_menu, iso_name);
 }
 
 
