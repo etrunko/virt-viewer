@@ -77,7 +77,6 @@ GList *ovirt_foreign_menu_fetch_iso_names_finish(OvirtForeignMenu *foreign_menu,
                                                  GAsyncResult *result,
                                                  GError **error);
 
-GtkWidget *ovirt_foreign_menu_get_gtk_menu(OvirtForeignMenu *foreign_menu);
 char *ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *menu);
 void ovirt_foreign_menu_set_current_iso_name_async(OvirtForeignMenu *foreign_menu,
                                                    char *name,
