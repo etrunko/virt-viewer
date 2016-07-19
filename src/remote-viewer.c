@@ -67,6 +67,13 @@ G_DEFINE_TYPE (RemoteViewer, remote_viewer, VIRT_VIEWER_TYPE_APP)
 #define GET_PRIVATE(o)                                                        \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), REMOTE_VIEWER_TYPE, RemoteViewerPrivate))
 
+enum RemoteViewerProperties {
+    PROP_0,
+#ifdef HAVE_OVIRT
+    PROP_OVIRT_FOREIGN_MENU,
+#endif
+};
+
 #ifdef HAVE_OVIRT
 static OvirtVm * choose_vm(GtkWindow *main_window,
                            char **vm_name,
@@ -214,6 +221,25 @@ end:
 }
 
 static void
+remote_viewer_get_property(GObject *object, guint property_id,
+                           GValue *value, GParamSpec *pspec)
+{
+    RemoteViewer *self = REMOTE_VIEWER(object);
+    RemoteViewerPrivate *priv = self->priv;
+
+    switch (property_id) {
+#ifdef HAVE_OVIRT
+    case PROP_OVIRT_FOREIGN_MENU:
+        g_value_set_object(value, priv->ovirt_foreign_menu);
+        break;
+#endif
+
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+    }
+}
+
+static void
 remote_viewer_class_init (RemoteViewerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -223,6 +249,7 @@ remote_viewer_class_init (RemoteViewerClass *klass)
 
     g_type_class_add_private (klass, sizeof (RemoteViewerPrivate));
 
+    object_class->get_property = remote_viewer_get_property;
     object_class->dispose = remote_viewer_dispose;
 
     g_app_class->local_command_line = remote_viewer_local_command_line;
@@ -235,6 +262,16 @@ remote_viewer_class_init (RemoteViewerClass *klass)
     gtk_app_class->window_added = remote_viewer_window_added;
 #else
     (void) gtk_app_class;
+#endif
+
+#ifdef HAVE_OVIRT
+    g_object_class_install_property(object_class,
+                                    PROP_OVIRT_FOREIGN_MENU,
+                                    g_param_spec_object("ovirt-foreign-menu",
+                                                        "oVirt Foreign Menu",
+                                                        "Object which is used as interface to oVirt",
+                                                        OVIRT_TYPE_FOREIGN_MENU,
+                                                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 #endif
 }
 
