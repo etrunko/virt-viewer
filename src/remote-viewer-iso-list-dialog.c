@@ -34,6 +34,7 @@ G_DEFINE_TYPE(RemoteViewerISOListDialog, remote_viewer_iso_list_dialog, GTK_TYPE
 
 struct _RemoteViewerISOListDialogPrivate
 {
+    GtkHeaderBar *header_bar;
     GtkListStore *list_store;
     GtkWidget *stack;
     GtkWidget *tree_view;
@@ -83,6 +84,19 @@ remote_viewer_iso_list_dialog_show_files(RemoteViewerISOListDialog *self)
 }
 
 static void
+remote_viewer_iso_list_dialog_set_subtitle(RemoteViewerISOListDialog *self, const char *iso_name)
+{
+    RemoteViewerISOListDialogPrivate *priv = self->priv;
+    gchar *subtitle = NULL;
+
+    if (iso_name && strlen(iso_name) != 0)
+        subtitle = g_strdup_printf(_("Current: %s"), iso_name);
+
+    gtk_header_bar_set_subtitle(priv->header_bar, subtitle);
+    g_free(subtitle);
+}
+
+static void
 remote_viewer_iso_list_dialog_foreach(char *name, RemoteViewerISOListDialog *self)
 {
     RemoteViewerISOListDialogPrivate *priv = self->priv;
@@ -102,6 +116,7 @@ remote_viewer_iso_list_dialog_foreach(char *name, RemoteViewerISOListDialog *sel
         gtk_tree_view_set_cursor(GTK_TREE_VIEW(priv->tree_view), path, NULL, FALSE);
         gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(priv->tree_view), path, NULL, TRUE, 0.5, 0.5);
         gtk_tree_path_free(path);
+        remote_viewer_iso_list_dialog_set_subtitle(self, current_iso);
     }
 
     free(current_iso);
@@ -136,6 +151,7 @@ remote_viewer_iso_list_dialog_response(GtkDialog *dialog,
     if (response_id != GTK_RESPONSE_NONE)
         return;
 
+    remote_viewer_iso_list_dialog_set_subtitle(self, NULL);
     gtk_stack_set_visible_child_full(GTK_STACK(priv->stack), "status",
                                      GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_dialog_set_response_sensitive(GTK_DIALOG(self), GTK_RESPONSE_NONE, FALSE);
@@ -187,8 +203,12 @@ remote_viewer_iso_list_dialog_init(RemoteViewerISOListDialog *self)
     RemoteViewerISOListDialogPrivate *priv = self->priv = DIALOG_PRIVATE(self);
     GtkBuilder *builder = virt_viewer_util_load_ui("remote-viewer-iso-list.ui");
     GtkCellRendererToggle *cell_renderer;
+    GtkWidget *button, *image;
 
     gtk_builder_connect_signals(builder, self);
+
+    priv->header_bar = GTK_HEADER_BAR(gtk_dialog_get_header_bar(GTK_DIALOG(self)));
+    gtk_header_bar_set_has_subtitle(priv->header_bar, TRUE);
 
     priv->stack = GTK_WIDGET(gtk_builder_get_object(builder, "stack"));
     gtk_box_pack_start(GTK_BOX(content), priv->stack, TRUE, TRUE, 0);
@@ -201,12 +221,11 @@ remote_viewer_iso_list_dialog_init(RemoteViewerISOListDialog *self)
 
     g_object_unref(builder);
 
-    gtk_dialog_add_buttons(GTK_DIALOG(self),
-                           _("Refresh"), GTK_RESPONSE_NONE,
-                           _("Close"), GTK_RESPONSE_CLOSE,
-                           NULL);
+    button = gtk_dialog_add_button(GTK_DIALOG(self), "", GTK_RESPONSE_NONE);
+    image = gtk_image_new_from_icon_name("view-refresh-symbolic", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_image(GTK_BUTTON(button), image);
+    gtk_button_set_always_show_image(GTK_BUTTON(button), TRUE);
 
-    gtk_dialog_set_default_response(GTK_DIALOG(self), GTK_RESPONSE_CLOSE);
     gtk_dialog_set_response_sensitive(GTK_DIALOG(self), GTK_RESPONSE_NONE, FALSE);
     g_signal_connect(self, "response", G_CALLBACK(remote_viewer_iso_list_dialog_response), NULL);
 }
@@ -246,6 +265,7 @@ ovirt_foreign_menu_notify_file(OvirtForeignMenu *foreign_menu,
         g_free(name);
     } while (gtk_tree_model_iter_next(model, &iter));
 
+    remote_viewer_iso_list_dialog_set_subtitle(self, current_iso);
     gtk_dialog_set_response_sensitive(GTK_DIALOG(self), GTK_RESPONSE_NONE, TRUE);
     gtk_widget_set_sensitive(priv->tree_view, TRUE);
 
@@ -276,6 +296,7 @@ remote_viewer_iso_list_dialog_new(GtkWindow *parent, GObject *foreign_menu)
                           "border-width", 18,
                           "default-width", 400,
                           "default-height", 300,
+                          "use-header-bar", TRUE,
                           NULL);
 
     self = REMOTE_VIEWER_ISO_LIST_DIALOG(dialog);
