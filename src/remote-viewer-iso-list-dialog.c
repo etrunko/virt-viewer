@@ -34,7 +34,10 @@ G_DEFINE_TYPE(RemoteViewerISOListDialog, remote_viewer_iso_list_dialog, GTK_TYPE
 
 struct _RemoteViewerISOListDialogPrivate
 {
+    GListStore *store;
+
     GtkHeaderBar *header_bar;
+    GtkListBox *listbox;
     GtkListStore *list_store;
     GtkWidget *stack;
     GtkWidget *tree_view;
@@ -47,6 +50,109 @@ enum RemoteViewerISOListDialogModel
     ISO_NAME,
     FONT_WEIGHT,
 };
+
+/**
+ * Definition of IsoObject, which is used as GListModel for GtkListBox
+ */
+typedef struct _IsoObjectClass IsoObjectClass;
+struct _IsoObjectClass
+{
+    GObjectClass parent_class;
+};
+
+typedef struct _IsoObject IsoObject;
+struct _IsoObject
+{
+    GObject parent;
+
+    RemoteViewerISOListDialog *dialog;
+    GtkWidget *radio;
+    GtkWidget *label;
+
+    gchar *name;
+    gchar *markup;
+    gboolean active;
+};
+
+GType iso_object_get_type(void);
+#define ISO_OBJECT_TYPE iso_object_get_type()
+#define ISO_OBJECT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), ISO_OBJECT_TYPE, IsoObject))
+G_DEFINE_TYPE(IsoObject, iso_object, G_TYPE_OBJECT);
+
+static void
+iso_object_update_radio_label(IsoObject *iso, gboolean active)
+{
+    iso->active = active;
+
+    if (iso->active)
+        gtk_label_set_markup(GTK_LABEL(iso->label), iso->markup);
+    else
+        gtk_label_set_text(GTK_LABEL(iso->label), iso->name);
+}
+
+static void
+iso_object_radio_clicked(GtkButton *button, gpointer user_data)
+{
+    IsoObject *iso = ISO_OBJECT(user_data);
+    gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button));
+
+    /* unset current iso */
+    if (iso->active && active) {
+        g_signal_handlers_block_by_func(button, iso_object_radio_clicked, user_data);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), FALSE);
+        g_signal_handlers_unblock_by_func(button, iso_object_radio_clicked, user_data);
+        iso_object_update_radio_label(iso, FALSE);
+        return;
+    }
+
+    iso_object_update_radio_label(iso, active);
+}
+
+
+static IsoObject *
+iso_object_new(RemoteViewerISOListDialog *dialog, gchar *name, gboolean active)
+{
+    IsoObject *iso = g_object_new(ISO_OBJECT_TYPE, NULL);
+    IsoObject *first = ISO_OBJECT(g_list_model_get_item(G_LIST_MODEL(dialog->priv->store), 0));
+
+    iso->name = g_strdup(name);
+    iso->markup = g_strdup_printf("<b>%s</b>", name);
+
+    iso->dialog = dialog;
+    iso->radio = gtk_radio_button_new_from_widget(first ? GTK_RADIO_BUTTON(first->radio) : NULL);
+    iso->label = gtk_label_new(NULL);
+    gtk_container_add(GTK_CONTAINER(iso->radio), iso->label);
+    gtk_container_set_border_width(GTK_CONTAINER(iso->radio), 3);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(iso->radio), active);
+    iso_object_update_radio_label(iso, active);
+    gtk_widget_show_all(iso->radio);
+    g_signal_connect(iso->radio, "clicked", (GCallback) iso_object_radio_clicked, iso);
+    return iso;
+}
+
+static void
+iso_object_dispose(GObject *object)
+{
+    IsoObject *iso = ISO_OBJECT(object);
+    g_clear_pointer(&iso->name, g_free);
+    g_clear_pointer(&iso->markup, g_free);
+    G_OBJECT_CLASS(iso_object_parent_class)->dispose(object);
+}
+
+static void
+iso_object_init(IsoObject *iso G_GNUC_UNUSED)
+{
+}
+
+static void
+iso_object_class_init(IsoObjectClass *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    object_class->dispose = iso_object_dispose;
+}
+/*
+ * IsoObject - End
+ */
 
 void remote_viewer_iso_list_dialog_toggled(GtkCellRendererToggle *cell_renderer, gchar *path, gpointer user_data);
 void remote_viewer_iso_list_dialog_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn *col, gpointer user_data);
@@ -78,7 +184,7 @@ static void
 remote_viewer_iso_list_dialog_show_files(RemoteViewerISOListDialog *self)
 {
     RemoteViewerISOListDialogPrivate *priv = self->priv = DIALOG_PRIVATE(self);
-    gtk_stack_set_visible_child_full(GTK_STACK(priv->stack), "iso-list",
+    gtk_stack_set_visible_child_full(GTK_STACK(priv->stack), "list",
                                      GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_dialog_set_response_sensitive(GTK_DIALOG(self), GTK_RESPONSE_NONE, TRUE);
 }
@@ -104,7 +210,9 @@ remote_viewer_iso_list_dialog_foreach(char *name, RemoteViewerISOListDialog *sel
     gboolean active = g_strcmp0(current_iso, name) == 0;
     gint weight = active ? PANGO_WEIGHT_BOLD : PANGO_WEIGHT_NORMAL;
     GtkTreeIter iter;
+    IsoObject *iso = iso_object_new(self, name, active);
 
+    g_list_store_append(priv->store, iso);
     gtk_list_store_append(priv->list_store, &iter);
     gtk_list_store_set(priv->list_store, &iter,
                        ISO_IS_ACTIVE, active,
@@ -130,6 +238,7 @@ remote_viewer_iso_list_dialog_refresh_iso_list(RemoteViewerISOListDialog *self,
     GList *iso_list;
 
     if (refreshing) {
+        g_list_store_remove_all(priv->store);
         gtk_list_store_clear(priv->list_store);
         ovirt_foreign_menu_start(priv->foreign_menu);
         return;
@@ -196,6 +305,13 @@ remote_viewer_iso_list_dialog_row_activated(GtkTreeView *view G_GNUC_UNUSED,
     g_free(path_str);
 }
 
+static GtkWidget *
+remote_viewer_iso_list_dialog_create_listbox_row(gpointer item, gpointer user_data G_GNUC_UNUSED)
+{
+    IsoObject *iso = ISO_OBJECT(item);
+    return iso->radio;
+}
+
 static void
 remote_viewer_iso_list_dialog_init(RemoteViewerISOListDialog *self)
 {
@@ -218,6 +334,13 @@ remote_viewer_iso_list_dialog_init(RemoteViewerISOListDialog *self)
     cell_renderer = GTK_CELL_RENDERER_TOGGLE(gtk_builder_get_object(builder, "cellrenderertoggle"));
     gtk_cell_renderer_toggle_set_radio(cell_renderer, TRUE);
     gtk_cell_renderer_set_padding(GTK_CELL_RENDERER(cell_renderer), 6, 6);
+
+    priv->store = g_list_store_new(iso_object_get_type());
+    priv->listbox = GTK_LIST_BOX(gtk_builder_get_object(builder, "listbox"));
+    gtk_list_box_bind_model(priv->listbox,
+                            G_LIST_MODEL(priv->store),
+                            remote_viewer_iso_list_dialog_create_listbox_row,
+                            NULL, NULL);
 
     g_object_unref(builder);
 
