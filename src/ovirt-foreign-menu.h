@@ -71,6 +71,8 @@ OvirtForeignMenu *ovirt_foreign_menu_new_from_file(VirtViewerFile *self);
 void ovirt_foreign_menu_start(OvirtForeignMenu *menu);
 
 GtkWidget *ovirt_foreign_menu_get_gtk_menu(OvirtForeignMenu *foreign_menu);
+char *ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *menu);
+GList *ovirt_foreign_menu_get_iso_names(OvirtForeignMenu *menu);
 
 G_END_DECLS
 

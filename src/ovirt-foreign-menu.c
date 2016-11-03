@@ -85,7 +85,7 @@ enum {
 };
 
 
-static char *
+char *
 ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *foreign_menu)
 {
     char *name;
@@ -97,6 +97,13 @@ ovirt_foreign_menu_get_current_iso_name(OvirtForeignMenu *foreign_menu)
     g_object_get(foreign_menu->priv->cdrom, "file", &name, NULL);
 
     return name;
+}
+
+
+GList*
+ovirt_foreign_menu_get_iso_names(OvirtForeignMenu *foreign_menu)
+{
+    return foreign_menu->priv->iso_names;
 }
 
 
