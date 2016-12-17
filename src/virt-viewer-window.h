@@ -80,6 +80,7 @@ void virt_viewer_window_leave_fullscreen(VirtViewerWindow *self);
 void virt_viewer_window_enter_fullscreen(VirtViewerWindow *self, gint monitor);
 GtkMenuButton *virt_viewer_window_get_menu_button_displays(VirtViewerWindow *self);
 GtkButton *virt_viewer_window_get_button_change_cd(VirtViewerWindow *self);
+GtkButton *virt_viewer_window_get_fullscreen_button_change_cd(VirtViewerWindow *self);
 GtkBuilder* virt_viewer_window_get_builder(VirtViewerWindow *window);
 void virt_viewer_window_set_kiosk(VirtViewerWindow *self, gboolean enabled);
 

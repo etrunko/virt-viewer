@@ -226,6 +226,25 @@
     <property name="visible">True</property>
     <property name="show-close-button">True</property>
     <child>
+      <object class="GtkButton" id="fullscreen-change-cd">
+        <property name="visible">False</property>
+        <property name="tooltip-text">Change CD</property>
+        <style>
+          <class name="image-button"/>
+        </style>
+        <child>
+          <object class="GtkImage" id="fullscreen-change-cd-icon">
+            <property name="visible">True</property>
+            <property name="icon-name">media-optical-symbolic</property>
+            <property name="icon-size">1</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="pack-type">end</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkButton" id="fullscreen-usb-devices">
         <property name="visible">False</property>
         <property name="tooltip-text">USB device selection</property>

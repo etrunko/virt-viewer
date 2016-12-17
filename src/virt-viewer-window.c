@@ -84,6 +84,7 @@ struct _VirtViewerWindowPrivate {
     GtkWidget *header;
     GtkWidget *fullscreen_headerbar;
     GtkWidget *toolbar_usb_device_selection;
+    GtkWidget *toolbar_change_cd;
     GtkAccelGroup *accel_group;
     VirtViewerNotebook *notebook;
     VirtViewerDisplay *display;
@@ -981,6 +982,7 @@ static void
 virt_viewer_window_fullscreen_headerbar_setup(VirtViewerWindow *self)
 {
     GtkWidget *overlay;
+    GtkWidget *change_cd_button;
     GtkWidget *leave_fullscreen_button;
     GtkWidget *usb_devices_button;
     GtkWidget *send_keys_button;
@@ -1001,10 +1003,23 @@ virt_viewer_window_fullscreen_headerbar_setup(VirtViewerWindow *self)
     g_signal_connect(usb_devices_button, "clicked",
                      G_CALLBACK(virt_viewer_window_headerbar_usb_device_selection), self);
 
+    change_cd_button = GTK_WIDGET(gtk_builder_get_object(priv->builder, "fullscreen-change-cd"));
+    priv->toolbar_change_cd = change_cd_button;
+    g_signal_connect(change_cd_button, "clicked",
+                     G_CALLBACK(virt_viewer_window_change_cd_cb), self);
+
     priv->fullscreen_headerbar = GTK_WIDGET(gtk_builder_get_object(priv->builder, "fullscreen-headerbar"));
     priv->revealer = virt_viewer_timed_revealer_new(priv->fullscreen_headerbar);
     overlay = GTK_WIDGET(gtk_builder_get_object(priv->builder, "viewer-overlay"));
     gtk_overlay_add_overlay(GTK_OVERLAY(overlay), GTK_WIDGET(priv->revealer));
+
+    /*
+     * The timerevelear will show all the widgets that are part of it.
+     * As the "foreign-menu" must be not visible by default, we have to,
+     * explicitly, change its visibility here.
+     */
+    gtk_widget_set_sensitive(priv->toolbar_change_cd, FALSE);
+    gtk_widget_set_visible(priv->toolbar_change_cd, FALSE);
 }
 
 VirtViewerNotebook*
@@ -1344,6 +1359,14 @@ virt_viewer_window_get_button_change_cd(VirtViewerWindow *self)
     g_return_val_if_fail(VIRT_VIEWER_IS_WINDOW(self), NULL);
 
     return GTK_BUTTON(gtk_builder_get_object(self->priv->builder, "change-cd"));
+}
+
+GtkButton*
+virt_viewer_window_get_fullscreen_button_change_cd(VirtViewerWindow *self)
+{
+    g_return_val_if_fail(VIRT_VIEWER_IS_WINDOW(self), NULL);
+
+    return GTK_BUTTON(gtk_builder_get_object(self->priv->builder, "fullscreen-change-cd"));
 }
 
 GtkBuilder*
