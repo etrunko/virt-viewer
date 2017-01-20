@@ -32,7 +32,7 @@ treeview_row_activated_cb(GtkTreeView *treeview G_GNUC_UNUSED,
                           GtkTreeViewColumn *col G_GNUC_UNUSED,
                           gpointer userdata)
 {
-    gtk_widget_activate(GTK_WIDGET(userdata));
+    gtk_button_clicked(GTK_BUTTON(userdata));
 }
 
 static void
@@ -42,13 +42,20 @@ treeselection_changed_cb(GtkTreeSelection *selection, gpointer userdata)
                              gtk_tree_selection_count_selected_rows(selection) == 1);
 }
 
+static void
+button_connect_clicked_cb(GtkButton *button G_GNUC_UNUSED,
+                          GtkDialog *dialog)
+{
+    gtk_dialog_response(dialog, GTK_RESPONSE_ACCEPT);
+}
+
 gchar*
 virt_viewer_vm_connection_choose_name_dialog(GtkWindow *main_window,
                                              GtkTreeModel *model,
                                              GError **error)
 {
     GtkBuilder *vm_connection;
-    GtkWidget *dialog;
+    GtkWidget *dialog, *headerbar;
     GtkButton *button_connect;
     GtkTreeView *treeview;
     GtkTreeSelection *selection;
@@ -69,12 +76,16 @@ virt_viewer_vm_connection_choose_name_dialog(GtkWindow *main_window,
     g_return_val_if_fail(vm_connection != NULL, NULL);
 
     dialog = GTK_WIDGET(gtk_builder_get_object(vm_connection, "vm-connection-dialog"));
+    headerbar = GTK_WIDGET(gtk_builder_get_object(vm_connection, "headerbar"));
+    gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
     gtk_window_set_transient_for(GTK_WINDOW(dialog), main_window);
     button_connect = GTK_BUTTON(gtk_builder_get_object(vm_connection, "button-connect"));
     treeview = GTK_TREE_VIEW(gtk_builder_get_object(vm_connection, "treeview"));
     selection = GTK_TREE_SELECTION(gtk_builder_get_object(vm_connection, "treeview-selection"));
     gtk_tree_view_set_model(treeview, model);
 
+    g_signal_connect(button_connect, "clicked",
+                     G_CALLBACK(button_connect_clicked_cb), dialog);
     g_signal_connect(treeview, "row-activated",
                      G_CALLBACK(treeview_row_activated_cb), button_connect);
     g_signal_connect(selection, "changed",
