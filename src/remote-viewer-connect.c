@@ -152,15 +152,6 @@ recent_item_activated_dialog_cb(GtkRecentChooser *chooser G_GNUC_UNUSED, gpointe
     shutdown_loop(ci->loop);
 }
 
-static void
-make_label_small(GtkLabel* label)
-{
-    PangoAttrList* attributes = pango_attr_list_new();
-    pango_attr_list_insert(attributes, pango_attr_scale_new(0.9));
-    gtk_label_set_attributes(label, attributes);
-    pango_attr_list_unref(attributes);
-}
-
 /**
 * remote_viewer_connect_dialog
 *
@@ -174,7 +165,7 @@ make_label_small(GtkLabel* label)
 gboolean
 remote_viewer_connect_dialog(gchar **uri)
 {
-    GtkWidget *window, *label, *entry, *recent, *connect_button, *cancel_button;
+    GtkWidget *window, *header, *entry, *recent, *connect_button;
     GtkRecentFilter *rfilter;
     GtkBuilder *builder;
     gboolean active;
@@ -192,12 +183,10 @@ remote_viewer_connect_dialog(gchar **uri)
     g_return_val_if_fail(builder != NULL, GTK_RESPONSE_NONE);
 
     window = GTK_WIDGET(gtk_builder_get_object(builder, "remote-viewer-connection-window"));
+    header = GTK_WIDGET(gtk_builder_get_object(builder, "headerbar"));
+    gtk_window_set_titlebar(GTK_WINDOW(window), header);
     connect_button = GTK_WIDGET(gtk_builder_get_object(builder, "connect-button"));
-    cancel_button = GTK_WIDGET(gtk_builder_get_object(builder, "cancel-button"));
-    label = GTK_WIDGET(gtk_builder_get_object(builder, "example-label"));
     entry = ci.entry = GTK_WIDGET(gtk_builder_get_object(builder, "connection-address-entry"));
-
-    make_label_small(GTK_LABEL(label));
 
     active = (gtk_entry_get_text_length(GTK_ENTRY(ci.entry)) > 0);
     gtk_widget_set_sensitive(GTK_WIDGET(connect_button), active);
@@ -216,9 +205,6 @@ remote_viewer_connect_dialog(gchar **uri)
     g_signal_connect(connect_button, "clicked",
                      G_CALLBACK(connect_button_clicked_cb), &ci);
 
-    /* make sure that user_data is passed as first parameter */
-    g_signal_connect_swapped(cancel_button, "clicked",
-                             G_CALLBACK(window_deleted_cb), &ci);
     g_signal_connect_swapped(window, "delete-event",
                              G_CALLBACK(window_deleted_cb), &ci);
 
