@@ -1074,16 +1074,19 @@ void
 virt_viewer_window_update_title(VirtViewerWindow *self)
 {
     VirtViewerWindowPrivate *priv = self->priv;
-    char *title;
-    gchar *ungrab = NULL;
-    gchar **accels;
+
+    if (priv->subtitle)
+        gtk_header_bar_set_title(GTK_HEADER_BAR(priv->header), priv->subtitle);
+    else
+        gtk_header_bar_set_title(GTK_HEADER_BAR(priv->header), g_get_application_name());
 
     if (priv->grabbed) {
-        gchar *label;
+        gchar *ungrab, *label;
         guint accel_key = 0;
         GdkModifierType accel_mods = 0;
 
         if (virt_viewer_app_get_enable_accel(priv->app)){
+            gchar **accels;
             accels = gtk_application_get_accels_for_action(GTK_APPLICATION(priv->app), "win.release-cursor");
             gtk_accelerator_parse(accels[0], &accel_key, &accel_mods);
             g_strfreev(accels);
@@ -1097,28 +1100,11 @@ virt_viewer_window_update_title(VirtViewerWindow *self)
         }
 
         ungrab = g_strdup_printf(_("(Press %s to release pointer)"), label);
+        gtk_header_bar_set_subtitle(GTK_HEADER_BAR(priv->header), ungrab);
+
+        g_free(ungrab);
         g_free(label);
     }
-
-    if (!ungrab && !priv->subtitle)
-        title = g_strdup(g_get_application_name());
-    else
-        /* translators:
-         * This is "<ungrab (or empty)><space (or empty)><subtitle (or empty)> - <appname>"
-         * Such as: "(Press Ctrl+Alt to release pointer) BigCorpTycoon MOTD - Virt Viewer"
-         */
-        title = g_strdup_printf(_("%s%s%s - %s"),
-                                /* translators: <ungrab empty> */
-                                ungrab ? ungrab : "",
-                                /* translators: <space> */
-                                ungrab && priv->subtitle ? _(" ") : "",
-                                priv->subtitle,
-                                g_get_application_name());
-
-    gtk_header_bar_set_title(GTK_HEADER_BAR(priv->header), title);
-
-    g_free(title);
-    g_free(ungrab);
 }
 
 void
