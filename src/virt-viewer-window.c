@@ -562,16 +562,17 @@ guest_details_activated(GSimpleAction *action G_GNUC_UNUSED,
 {
     VirtViewerWindow *self = VIRT_VIEWER_WINDOW(data);
     GtkBuilder *ui = virt_viewer_util_load_ui("virt-viewer-guest-details.ui");
+    GtkWidget *dialog, *headerbar, *namelabel, *guidlabel;
     char *name = NULL;
     char *uuid = NULL;
 
     g_return_if_fail(ui != NULL);
 
-    GtkWidget *dialog = GTK_WIDGET(gtk_builder_get_object(ui, "guestdetailsdialog"));
-    GtkWidget *namelabel = GTK_WIDGET(gtk_builder_get_object(ui, "namevaluelabel"));
-    GtkWidget *guidlabel = GTK_WIDGET(gtk_builder_get_object(ui, "guidvaluelabel"));
-
-    g_return_if_fail(dialog && namelabel && guidlabel);
+    dialog = GTK_WIDGET(gtk_builder_get_object(ui, "guestdetailsdialog"));
+    headerbar = GTK_WIDGET(gtk_builder_get_object(ui, "headerbar"));
+    gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
+    namelabel = GTK_WIDGET(gtk_builder_get_object(ui, "namevaluelabel"));
+    guidlabel = GTK_WIDGET(gtk_builder_get_object(ui, "guidvaluelabel"));
 
     g_object_get(self->priv->app, "guest-name", &name, "uuid", &uuid, NULL);
 
@@ -579,6 +580,7 @@ guest_details_activated(GSimpleAction *action G_GNUC_UNUSED,
         name = g_strdup(_("Unknown"));
     if (!uuid || *uuid == '\0')
         uuid = g_strdup(_("Unknown"));
+    gtk_header_bar_set_subtitle(GTK_HEADER_BAR(headerbar), name);
     gtk_label_set_text(GTK_LABEL(namelabel), name);
     gtk_label_set_text(GTK_LABEL(guidlabel), uuid);
     g_free(name);
