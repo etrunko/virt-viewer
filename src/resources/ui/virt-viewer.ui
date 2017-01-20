@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.20.0 -->
 <interface>
-  <requires lib="gtk+" version="3.0"/>
-  <!-- interface-requires gtk+ 2.6 -->
+  <requires lib="gtk+" version="3.12"/>
   <menu id="gears-menu">
     <section>
       <item>
@@ -104,108 +103,118 @@
     </section>
   </menu>
   <object class="GtkAccelGroup" id="accelgroup"/>
+  <object class="GtkHeaderBar" id="fullscreen-headerbar">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="show_close_button">True</property>
+    <property name="decoration_layout">:close</property>
+    <child type="title">
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">6</property>
+        <child>
+          <object class="GtkButton" id="leave-fullscreen">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Leave fullscreen</property>
+            <child>
+              <object class="GtkImage" id="leave-fullscreen-image">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">view-restore-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkMenuButton" id="fullscreen-send-keys">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Send key combination</property>
+            <child>
+              <object class="GtkImage" id="fullscreen-send-keys-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">input-keyboard-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="fullscreen-usb-devices">
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">USB device selection</property>
+            <child>
+              <object class="GtkImage" id="fullscreen-usb-devices-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">media-removable-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="fullscreen-change-cd">
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Change CD</property>
+            <child>
+              <object class="GtkImage" id="fullscreen-change-cd-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">media-optical-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkApplicationWindow" id="viewer">
     <property name="can_focus">False</property>
     <property name="default_width">1024</property>
     <property name="default_height">768</property>
     <signal name="delete-event" handler="virt_viewer_window_delete" swapped="no"/>
-    <child type="titlebar">
-      <object class="GtkHeaderBar" id="header">
-        <property name="visible">True</property>
-        <property name="show-close-button">True</property>
-        <child>
-          <object class="GtkMenuButton" id="gears">
-            <property name="visible">True</property>
-            <property name="direction">none</property>
-            <property name="use-popover">True</property>
-            <style>
-              <class name="image-button"/>
-            </style>
-          </object>
-          <packing>
-            <property name="pack-type">end</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="change-cd">
-            <property name="visible">False</property>
-            <property name="tooltip-text">Change CD</property>
-            <style>
-              <class name="image-button"/>
-            </style>
-            <child>
-              <object class="GtkImage" id="change-cd-icon">
-                <property name="visible">True</property>
-                <property name="icon-name">media-optical-symbolic</property>
-                <property name="icon-size">1</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="pack-type">end</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkMenuButton" id="displays">
-            <property name="visible">True</property>
-            <property name="use-popover">True</property>
-            <property name="tooltip-text">Select display</property>
-            <style>
-              <class name="image-button"/>
-            </style>
-            <child>
-              <object class="GtkImage" id="displays-icon">
-                <property name="visible">True</property>
-                <property name="icon-name">video-display-symbolic</property>
-                <property name="icon-size">1</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="pack-type">end</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkMenuButton" id="send-keys">
-            <property name="visible">True</property>
-            <property name="use-popover">True</property>
-            <property name="tooltip-text">Send key combination</property>
-            <style>
-              <class name="image-button"/>
-            </style>
-            <child>
-              <object class="GtkImage" id="send-keys-icon">
-                <property name="visible">True</property>
-                <property name="icon-name">input-keyboard-symbolic</property>
-                <property name="icon-size">1</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="pack-type">end</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="fullscreen">
-            <property name="visible">True</property>
-            <property name="tooltip-text">Fullscreen</property>
-            <style>
-              <class name="image-button"/>
-            </style>
-            <child>
-              <object class="GtkImage" id="fullscreen-icon">
-                <property name="visible">True</property>
-                <property name="icon-name">view-fullscreen-symbolic</property>
-                <property name="icon-size">1</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="pack-type">end</property>
-          </packing>
-        </child>
-      </object>
-    </child>
     <child>
       <object class="GtkOverlay" id="viewer-overlay">
         <property name="visible">True</property>
@@ -221,86 +230,120 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkHeaderBar" id="fullscreen-headerbar">
-    <property name="visible">True</property>
-    <property name="show-close-button">True</property>
-    <child>
-      <object class="GtkButton" id="fullscreen-change-cd">
-        <property name="visible">False</property>
-        <property name="tooltip-text">Change CD</property>
-        <style>
-          <class name="image-button"/>
-        </style>
-        <child>
-          <object class="GtkImage" id="fullscreen-change-cd-icon">
-            <property name="visible">True</property>
-            <property name="icon-name">media-optical-symbolic</property>
-            <property name="icon-size">1</property>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="pack-type">end</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButton" id="fullscreen-usb-devices">
-        <property name="visible">False</property>
-        <property name="tooltip-text">USB device selection</property>
-        <style>
-          <class name="image-button"/>
-        </style>
-        <child>
-          <object class="GtkImage" id="fullscreen-usb-devices-icon">
-            <property name="visible">True</property>
-            <property name="icon-name">media-removable-symbolic</property>
-            <property name="icon-size">1</property>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="pack-type">end</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkMenuButton" id="fullscreen-send-keys">
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="header">
         <property name="visible">True</property>
-        <property name="use-popover">True</property>
-        <property name="tooltip-text">Send key combination</property>
-        <style>
-          <class name="image-button"/>
-        </style>
+        <property name="can_focus">False</property>
+        <property name="show_close_button">True</property>
         <child>
-          <object class="GtkImage" id="fullscreen-send-keys-icon">
+          <object class="GtkMenuButton" id="gears">
             <property name="visible">True</property>
-            <property name="icon-name">input-keyboard-symbolic</property>
-            <property name="icon-size">1</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="direction">none</property>
+            <child>
+              <placeholder/>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
           </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="change-cd">
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Change CD</property>
+            <child>
+              <object class="GtkImage" id="change-cd-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">media-optical-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkMenuButton" id="displays">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Select display</property>
+            <child>
+              <object class="GtkImage" id="displays-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">video-display-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkMenuButton" id="send-keys">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Send key combination</property>
+            <child>
+              <object class="GtkImage" id="send-keys-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">input-keyboard-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="fullscreen">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">False</property>
+            <property name="tooltip_text">Fullscreen</property>
+            <child>
+              <object class="GtkImage" id="fullscreen-icon">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">view-fullscreen-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <style>
+              <class name="image-button"/>
+            </style>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">4</property>
+          </packing>
         </child>
       </object>
-      <packing>
-        <property name="pack-type">end</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButton" id="leave-fullscreen">
-        <property name="visible">True</property>
-        <property name="tooltip-text">Leave fullscreen</property>
-        <style>
-          <class name="image-button"/>
-        </style>
-        <child>
-          <object class="GtkImage" id="leave-fullscreen-image">
-            <property name="visible">True</property>
-            <property name="icon-name">view-restore-symbolic</property>
-            <property name="icon-size">1</property>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="pack-type">end</property>
-      </packing>
     </child>
   </object>
 </interface>
