@@ -2475,43 +2475,53 @@ static GtkWidget *
 virt_viewer_app_get_preferences(VirtViewerApp *self)
 {
     VirtViewerSession *session = virt_viewer_app_get_session(self);
-    GtkBuilder *builder = virt_viewer_util_load_ui("virt-viewer-preferences.ui");
     gboolean can_share_folder = virt_viewer_session_can_share_folder(session);
-    GtkWidget *preferences = self->priv->preferences;
+    GtkWidget *headerbar, *check, *chooser, *readonly, *preferences = self->priv->preferences;
+    GtkBuilder *builder;
     gchar *path;
 
     if (preferences)
         goto end;
 
+    builder = virt_viewer_util_load_ui("virt-viewer-preferences.ui");
     gtk_builder_connect_signals(builder, self);
 
     preferences = GTK_WIDGET(gtk_builder_get_object(builder, "preferences"));
-    self->priv->preferences = preferences;
+    headerbar = GTK_WIDGET(gtk_builder_get_object(builder, "headerbar"));
+    gtk_window_set_titlebar(GTK_WINDOW(preferences), headerbar);
 
-    g_object_set (gtk_builder_get_object(builder, "cbsharefolder"),
-                  "sensitive", can_share_folder, NULL);
-    g_object_set (gtk_builder_get_object(builder, "cbsharefolderro"),
-                  "sensitive", can_share_folder, NULL);
-    g_object_set (gtk_builder_get_object(builder, "fcsharefolder"),
-                  "sensitive", can_share_folder, NULL);
+    check = GTK_WIDGET(gtk_builder_get_object(builder, "cbsharefolder"));
+    chooser = GTK_WIDGET(gtk_builder_get_object(builder, "fcsharefolder"));
+    readonly = GTK_WIDGET(gtk_builder_get_object(builder, "cbsharefolderro"));
+
+    gtk_widget_set_sensitive(check, can_share_folder);
+
+    g_object_bind_property(G_OBJECT(check), "active",
+                           G_OBJECT(chooser), "sensitive",
+                           G_BINDING_SYNC_CREATE);
+
+    g_object_bind_property(G_OBJECT(check), "active",
+                           G_OBJECT(readonly), "sensitive",
+                           G_BINDING_SYNC_CREATE);
+
+    self->priv->preferences = preferences;
 
     if (!can_share_folder)
         goto end;
 
     g_object_bind_property(virt_viewer_app_get_session(self),
                            "share-folder",
-                           gtk_builder_get_object(builder, "cbsharefolder"),
+                           G_OBJECT(check),
                            "active",
                            G_BINDING_BIDIRECTIONAL|G_BINDING_SYNC_CREATE);
 
     g_object_bind_property(virt_viewer_app_get_session(self),
                            "share-folder-ro",
-                           gtk_builder_get_object(builder, "cbsharefolderro"),
+                           G_OBJECT(readonly),
                            "active",
                            G_BINDING_BIDIRECTIONAL|G_BINDING_SYNC_CREATE);
 
-    self->priv->preferences_shared_folder =
-        GTK_FILE_CHOOSER(gtk_builder_get_object(builder, "fcsharefolder"));
+    self->priv->preferences_shared_folder = GTK_FILE_CHOOSER(chooser);
 
     g_object_get(virt_viewer_app_get_session(self),
                  "shared-folder", &path, NULL);
@@ -2524,8 +2534,8 @@ virt_viewer_app_get_preferences(VirtViewerApp *self)
                                       G_CALLBACK(share_folder_changed), self,
                                       G_CONNECT_SWAPPED);
 
-end:
     g_object_unref(builder);
+end:
 
     return preferences;
 }
