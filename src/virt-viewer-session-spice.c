@@ -794,16 +794,20 @@ virt_viewer_session_spice_usb_device_selection(VirtViewerSession *session,
 {
     VirtViewerSessionSpice *self = VIRT_VIEWER_SESSION_SPICE(session);
     VirtViewerSessionSpicePrivate *priv = self->priv;
-    GtkWidget *dialog, *area, *usb_device_widget;
+    GtkWidget *dialog, *area, *usb_device_widget, *headerbar;
 
     /* Create the widgets */
-    dialog = gtk_dialog_new_with_buttons(_("Select USB devices for redirection"), parent,
-                                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         _("_Close"), GTK_RESPONSE_ACCEPT,
-                                         NULL);
-    gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-    gtk_container_set_border_width(GTK_CONTAINER(dialog), 12);
-    gtk_box_set_spacing(GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog))), 12);
+    dialog = g_object_new(GTK_TYPE_DIALOG,
+                          "title", _("Select USB devices for redirection"),
+                          "transient-for", parent,
+                          "use-header-bar", TRUE,
+                          "border-width", 12,
+                          "content-area-spacing", 12,
+                          NULL);
+
+    headerbar = gtk_dialog_get_header_bar(GTK_DIALOG(dialog));
+    gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
+    gtk_header_bar_set_decoration_layout(GTK_HEADER_BAR(headerbar), ":close");
 
     area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
