@@ -31,7 +31,7 @@ struct _VirtViewerFileTransferDialogPrivate
     guint timer_show_src;
     guint timer_hide_src;
     GtkWidget *transfer_summary;
-    GtkWidget *progressbar;
+    GtkWidget *levelbar;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(VirtViewerFileTransferDialog, virt_viewer_file_transfer_dialog, GTK_TYPE_DIALOG)
@@ -66,52 +66,40 @@ virt_viewer_file_transfer_dialog_class_init(VirtViewerFileTransferDialogClass *k
                                                  transfer_summary);
     gtk_widget_class_bind_template_child_private(widget_class,
                                                  VirtViewerFileTransferDialog,
-                                                 progressbar);
+                                                 levelbar);
 
     object_class->dispose = virt_viewer_file_transfer_dialog_dispose;
-}
-
-static void
-dialog_response(GtkDialog *dialog,
-                gint response_id,
-                gpointer user_data G_GNUC_UNUSED)
-{
-    VirtViewerFileTransferDialog *self = VIRT_VIEWER_FILE_TRANSFER_DIALOG(dialog);
-    GSList *slist;
-
-    switch (response_id) {
-        case GTK_RESPONSE_CANCEL:
-            /* cancel all current tasks */
-            for (slist = self->priv->file_transfers; slist != NULL; slist = g_slist_next(slist)) {
-                spice_file_transfer_task_cancel(SPICE_FILE_TRANSFER_TASK(slist->data));
-            }
-            break;
-        case GTK_RESPONSE_DELETE_EVENT:
-            /* silently ignore */
-            break;
-        default:
-            g_warn_if_reached();
-    }
 }
 
 static gboolean delete_event(GtkWidget *widget,
                              GdkEvent *event G_GNUC_UNUSED,
                              gpointer user_data G_GNUC_UNUSED)
 {
-    /* don't allow window to be deleted, just process the response signal,
-     * which may result in the window being hidden */
-    gtk_dialog_response(GTK_DIALOG(widget), GTK_RESPONSE_CANCEL);
+    VirtViewerFileTransferDialog *self = VIRT_VIEWER_FILE_TRANSFER_DIALOG(widget);
+    GSList *slist;
+    for (slist = self->priv->file_transfers; slist != NULL; slist = g_slist_next(slist)) {
+        spice_file_transfer_task_cancel(SPICE_FILE_TRANSFER_TASK(slist->data));
+    }
     return TRUE;
 }
 
 static void
 virt_viewer_file_transfer_dialog_init(VirtViewerFileTransferDialog *self)
 {
+    GtkWidget *headerbar;
     gtk_widget_init_template(GTK_WIDGET(self));
 
     self->priv = FILE_TRANSFER_DIALOG_PRIVATE(self);
 
-    g_signal_connect(self, "response", G_CALLBACK(dialog_response), NULL);
+    headerbar = gtk_dialog_get_header_bar(GTK_DIALOG(self));
+    gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
+    gtk_header_bar_set_decoration_layout(GTK_HEADER_BAR(headerbar), ":close");
+
+    gtk_level_bar_add_offset_value(GTK_LEVEL_BAR(self->priv->levelbar),
+                                   GTK_LEVEL_BAR_OFFSET_LOW, 0.0);
+    gtk_level_bar_add_offset_value(GTK_LEVEL_BAR(self->priv->levelbar),
+                                   GTK_LEVEL_BAR_OFFSET_HIGH, 1.0);
+
     g_signal_connect(self, "delete-event", G_CALLBACK(delete_event), NULL);
 }
 
@@ -122,6 +110,7 @@ virt_viewer_file_transfer_dialog_new(GtkWindow *parent)
                         "title", _("File Transfers"),
                         "transient-for", parent,
                         "resizable", FALSE,
+                        "use-header-bar", TRUE,
                         NULL);
 }
 
@@ -142,11 +131,13 @@ static void update_global_progress(VirtViewerFileTransferDialog *self)
 
     if (n_files > 0)
         fraction = (gdouble)transferred / total;
-    message = g_strdup_printf(ngettext("Transferring %d file...",
-                                       "Transferring %d files...", n_files),
-                              n_files);
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->priv->progressbar), fraction);
-    gtk_label_set_text(GTK_LABEL(self->priv->transfer_summary), message);
+    message = g_strdup_printf(_("Transferring <b>%d</b> %s... (%.0f%s)"),
+                              n_files,
+                              n_files == 1 ? _("file") : _("files"),
+                              fraction*100,
+                              "%");
+    gtk_level_bar_set_value(GTK_LEVEL_BAR(self->priv->levelbar), fraction);
+    gtk_label_set_markup(GTK_LABEL(self->priv->transfer_summary), message);
     g_free(message);
 }
 
