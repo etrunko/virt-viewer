@@ -33,11 +33,21 @@
 #include "virt-viewer-auth.h"
 #include "virt-viewer-util.h"
 
-static void
+void show_password(GtkCheckButton *check_button G_GNUC_UNUSED, GtkEntry *entry);
+void button_ok_clicked(GtkButton *button G_GNUC_UNUSED, GtkDialog *dialog);
+
+void
 show_password(GtkCheckButton *check_button G_GNUC_UNUSED,
               GtkEntry *entry)
 {
     gtk_entry_set_visibility(entry, !gtk_entry_get_visibility(entry));
+}
+
+void
+button_ok_clicked(GtkButton *button G_GNUC_UNUSED,
+                  GtkDialog *dialog)
+{
+    gtk_dialog_response(dialog, GTK_RESPONSE_OK);
 }
 
 /* NOTE: if username is provided, and *username is non-NULL, the user input
@@ -55,23 +65,19 @@ virt_viewer_auth_collect_credentials(GtkWindow *window,
     GtkBuilder *creds = virt_viewer_util_load_ui("virt-viewer-auth.ui");
     GtkWidget *credUsername;
     GtkWidget *credPassword;
-    GtkWidget *promptUsername;
-    GtkWidget *promptPassword;
-    GtkWidget *labelMessage;
-    GtkWidget *checkPassword;
+    GtkWidget *headerbar;
     int response;
     char *message;
 
     dialog = GTK_WIDGET(gtk_builder_get_object(creds, "auth"));
-    gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
     gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
+    gtk_builder_connect_signals(creds, dialog);
 
-    labelMessage = GTK_WIDGET(gtk_builder_get_object(creds, "message"));
+    headerbar = GTK_WIDGET(gtk_builder_get_object(creds, "headerbar"));
+    gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
+
     credUsername = GTK_WIDGET(gtk_builder_get_object(creds, "cred-username"));
-    promptUsername = GTK_WIDGET(gtk_builder_get_object(creds, "prompt-username"));
     credPassword = GTK_WIDGET(gtk_builder_get_object(creds, "cred-password"));
-    promptPassword = GTK_WIDGET(gtk_builder_get_object(creds, "prompt-password"));
-    checkPassword = GTK_WIDGET(gtk_builder_get_object(creds, "show-password"));
 
     gtk_widget_set_sensitive(credUsername, username != NULL);
     if (username && *username) {
@@ -79,22 +85,19 @@ virt_viewer_auth_collect_credentials(GtkWindow *window,
         /* if username is pre-filled, move focus to password field */
         gtk_widget_grab_focus(credPassword);
     }
-    gtk_widget_set_sensitive(promptUsername, username != NULL);
     gtk_widget_set_sensitive(credPassword, password != NULL);
-    gtk_widget_set_sensitive(promptPassword, password != NULL);
 
-    g_signal_connect(checkPassword, "clicked", G_CALLBACK(show_password), credPassword);
 
     if (address) {
-        message = g_strdup_printf(_("Authentication is required for the %s connection to:\n\n<b>%s</b>\n\n"),
+        message = g_strdup_printf(_("For the %s connection to '%s'"),
                                   type,
                                   address);
     } else {
-        message = g_strdup_printf(_("Authentication is required for the %s connection:\n"),
+        message = g_strdup_printf(_("For the %s connection"),
                                   type);
     }
 
-    gtk_label_set_markup(GTK_LABEL(labelMessage), message);
+    gtk_header_bar_set_subtitle(GTK_HEADER_BAR(headerbar), message);
     g_free(message);
 
     gtk_widget_show_all(dialog);
