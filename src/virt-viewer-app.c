@@ -2602,6 +2602,14 @@ gboolean virt_viewer_app_get_session_cancelled(VirtViewerApp *self)
     return self->priv->cancelled;
 }
 
+gboolean virt_viewer_app_get_use_header_bar(VirtViewerApp *self)
+{
+    gboolean use_header;
+    GtkSettings *settings = gtk_settings get_default();
+    g_object_get(settings, "gtk-dialogs-use-header", &use_header, NULL);
+    return use_header;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4
