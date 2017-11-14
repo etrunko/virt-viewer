@@ -90,6 +90,14 @@ entry_icon_release_cb(GtkEntry* entry, gpointer data G_GNUC_UNUSED)
     gtk_widget_grab_focus(GTK_WIDGET(entry));
 }
 
+static gboolean
+window_mapped(GtkWidget *widget, GdkEvent *event G_GNUC_UNUSED,
+              gpointer data G_GNUC_UNUSED)
+{
+    gtk_widget_grab_focus(widget);
+    return FALSE;
+}
+
 static void
 entry_changed_cb(GtkEditable* entry, gpointer data)
 {
@@ -229,6 +237,8 @@ remote_viewer_connect_dialog(GtkWindow *main_window, gchar **uri)
                      G_CALLBACK(entry_changed_cb), connect_button);
     g_signal_connect(entry, "icon-release",
                      G_CALLBACK(entry_icon_release_cb), entry);
+    g_signal_connect(entry, "map-event",
+                     G_CALLBACK(window_mapped), NULL);
 
     g_signal_connect(recent, "selection-changed",
                      G_CALLBACK(recent_selection_changed_dialog_cb), entry);
