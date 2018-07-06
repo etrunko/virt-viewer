@@ -631,11 +631,20 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static gboolean storage_domain_attached_to_data_center(OvirtStorageDomain *domain,
-                                                      OvirtDataCenter *data_center)
+                                                       OvirtDataCenter *data_center)
 {
     GStrv data_center_ids;
     char *data_center_guid;
     gboolean match;
+
+    /* For some reason we did not get data center information, so just return
+     * TRUE as it will work like a fallback to old method, where we did not
+     * check relationship between data center and storage domain.
+     */
+    if (data_center == NULL) {
+        g_debug("Could not get data center info, considering storage domain is attached to it");
+        return TRUE;
+    }
 
     g_object_get(domain, "data-center-ids", &data_center_ids, NULL);
     g_object_get(data_center, "guid", &data_center_guid, NULL);
@@ -750,9 +759,6 @@ static void data_center_fetched_cb(GObject *source_object,
     ovirt_resource_refresh_finish(resource, result, &error);
     if (error != NULL) {
         g_debug("failed to fetch Data Center: %s", error->message);
-        g_task_return_error(task, error);
-        g_object_unref(task);
-        return;
     }
 
     ovirt_foreign_menu_next_async_step(menu, task, STATE_DATA_CENTER);
@@ -767,6 +773,12 @@ static void ovirt_foreign_menu_fetch_data_center_async(OvirtForeignMenu *menu,
     g_return_if_fail(OVIRT_IS_CLUSTER(menu->priv->cluster));
 
     menu->priv->data_center = ovirt_cluster_get_data_center(menu->priv->cluster);
+
+    if (menu->priv->data_center == NULL) {
+        ovirt_foreign_menu_next_async_step(menu, task, STATE_DATA_CENTER);
+        return;
+    }
+
     ovirt_resource_refresh_async(OVIRT_RESOURCE(menu->priv->data_center),
                                  menu->priv->proxy,
                                  g_task_get_cancellable(task),
@@ -787,9 +799,6 @@ static void cluster_fetched_cb(GObject *source_object,
     ovirt_resource_refresh_finish(resource, result, &error);
     if (error != NULL) {
         g_debug("failed to fetch Cluster: %s", error->message);
-        g_task_return_error(task, error);
-        g_object_unref(task);
-        return;
     }
 
     ovirt_foreign_menu_next_async_step(menu, task, STATE_CLUSTER);
@@ -801,9 +810,14 @@ static void ovirt_foreign_menu_fetch_cluster_async(OvirtForeignMenu *menu,
 {
     g_return_if_fail(OVIRT_IS_FOREIGN_MENU(menu));
     g_return_if_fail(OVIRT_IS_PROXY(menu->priv->proxy));
-    g_return_if_fail(OVIRT_IS_HOST(menu->priv->host));
+    g_return_if_fail(OVIRT_IS_VM(menu->priv->vm));
 
-    menu->priv->cluster = ovirt_host_get_cluster(menu->priv->host);
+    /* If there is no host information, we get cluster from the VM */
+    if (menu->priv->host == NULL)
+        menu->priv->cluster = ovirt_vm_get_cluster(menu->priv->vm);
+    else
+        menu->priv->cluster = ovirt_host_get_cluster(menu->priv->host);
+
     ovirt_resource_refresh_async(OVIRT_RESOURCE(menu->priv->cluster),
                                  menu->priv->proxy,
                                  g_task_get_cancellable(task),
@@ -824,9 +838,6 @@ static void host_fetched_cb(GObject *source_object,
     ovirt_resource_refresh_finish(resource, result, &error);
     if (error != NULL) {
         g_debug("failed to fetch Host: %s", error->message);
-        g_task_return_error(task, error);
-        g_object_unref(task);
-        return;
     }
 
     ovirt_foreign_menu_next_async_step(menu, task, STATE_HOST);
@@ -841,6 +852,15 @@ static void ovirt_foreign_menu_fetch_host_async(OvirtForeignMenu *menu,
     g_return_if_fail(OVIRT_IS_VM(menu->priv->vm));
 
     menu->priv->host = ovirt_vm_get_host(menu->priv->vm);
+
+    /* In some cases the VM XML does not include host information, so we just
+     * skip to the next step
+     */
+    if (menu->priv->host == NULL) {
+        ovirt_foreign_menu_next_async_step(menu, task, STATE_HOST);
+        return;
+    }
+
     ovirt_resource_refresh_async(OVIRT_RESOURCE(menu->priv->host),
                                  menu->priv->proxy,
                                  g_task_get_cancellable(task),
