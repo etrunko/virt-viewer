@@ -719,7 +719,8 @@ static void storage_domains_fetched_cb(GObject *source_object,
             }
             menu->priv->files = g_object_ref(G_OBJECT(file_collection));
             g_debug("Set VM files to %p", menu->priv->files);
-            break;
+            break; /* There can only be one valid storage domain at a time,
+                      no need to iterate more on the list */
         }
     }
 
