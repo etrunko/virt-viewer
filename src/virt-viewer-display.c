@@ -140,7 +140,7 @@ virt_viewer_display_class_init(VirtViewerDisplayClass *class)
                                     g_param_spec_flags("show-hint",
                                                        "Show hint",
                                                        "Show state hint",
-                                                       VIRT_VIEWER_TYPE_DISPLAY_SHOW_HINT_FLAGS,
+                                                       VIRT_TYPE_VIEWER_DISPLAY_SHOW_HINT_FLAGS, /* from generated virt-viewer-enums.h */
                                                        0,
                                                        G_PARAM_READABLE));
 
