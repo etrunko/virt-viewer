@@ -40,8 +40,8 @@ virt-viewer-resources.c virt-viewer-resources.h: resources/virt-viewer.gresource
 
 virt-viewer-enums.c virt-viewer-enums.h: %: %.etemplate $(ENUMS_FILES)
 	$(AM_V_GEN)LC_ALL= LANG=C LC_CTYPE=en_US.UTF-8 $(GLIB_MKENUMS) --template $^ | \
-            sed -e 's/VIRT_TYPE_VIEWER/VIRT_VIEWER_TYPE/' \
-                -e 's,#include "$(srcdir)/,#include ",' > $@
+            sed -e 's,#include "$(srcdir)/,#include ",' > $@
+
 
 CLEANFILES = \
 	$(BUILT_SOURCES)				\
