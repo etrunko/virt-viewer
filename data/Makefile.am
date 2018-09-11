@@ -4,6 +4,7 @@ MANUFACTURER = Virt Manager Project
 
 EXTRA_DIST =					\
 	virt-viewer.wxs.in			\
+	meson.build				\
 	$(NULL)
 
 # this make sure those files are regenerated when they change

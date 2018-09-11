@@ -8,6 +8,7 @@ dist_man_MANS =					\
 EXTRA_DIST =					\
 	remote-viewer.pod			\
 	virt-viewer.pod				\
+	meson.build				\
 	$(NULL)
 
 MAINTAINERCLEANFILES = $(dist_man_MANS)

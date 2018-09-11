@@ -19,6 +19,9 @@ EXTRA_DIST =					\
 	build-aux/vc-list-files			\
 	AUTHORS.in				\
 	README.md				\
+	meson.build				\
+	meson_options.txt			\
+	po/meson.build				\
 	$(NULL)
 
 DISTCLEAN_FILES =				\

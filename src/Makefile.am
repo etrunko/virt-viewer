@@ -22,6 +22,7 @@ EXTRA_DIST =					\
 	virt-viewer-enums.c.etemplate		\
 	virt-viewer-enums.h.etemplate		\
 	resources/virt-viewer.gresource.xml	\
+	meson.build				\
 	$(NULL)
 
 ENUMS_FILES =					\

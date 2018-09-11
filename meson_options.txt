@@ -1,0 +1,25 @@
+option('libvirt',
+    type : 'feature',
+    description: 'Enable libvirt')
+
+option('gtk-vnc',
+    type : 'feature',
+    description: 'Enable gtk-vnc')
+
+option('spice-gtk',
+    type : 'feature',
+    description: 'Enable spice-gtk')
+
+option('ovirt',
+    type : 'feature',
+    description: 'Enable ovirt')
+
+option('osid',
+    type : 'string',
+    description: 'OS ID for this build')
+
+option('buildid',
+    type : 'string',
+    value : '0',
+    description: 'Set additional build version details')
+

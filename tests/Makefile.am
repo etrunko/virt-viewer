@@ -48,4 +48,6 @@ redirect_test_LDFLAGS = -Wl,--subsystem,windows
 redirect_test_CPPFLAGS = $(GLIB2_CFLAGS)
 endif
 
+EXTRA_DIST = meson.build
+
 -include $(top_srcdir)/git.mk
