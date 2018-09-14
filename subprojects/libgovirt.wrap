@@ -1,0 +1,4 @@
+[wrap-git]
+directory=libgovirt
+url=https://gitlab.gnome.org/eblima/libgovirt.git
+revision=meson

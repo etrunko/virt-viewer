@@ -137,12 +137,13 @@ endif
 # ovirt
 virt_viewer_has_ovirt = false
 rest_dep = dependency('rest-0.7', version : rest_required, required : get_option('ovirt'))
-ovirt_dep = dependency('govirt-1.0', version : govirt_required, required: get_option('ovirt'))
+ovirt_dep = dependency('#govirt-1.0', version : govirt_required, required: get_option('ovirt'), fallback : ['libgovirt', 'govirt_lib_dep'])
 
 if rest_dep.found() and ovirt_dep.found()
   virt_viewer_deps += [rest_dep, ovirt_dep]
 
-  if (compiler.has_function('ovirt_api_search_vms', dependencies : ovirt_dep) and
+  if (ovirt_dep.type_name() == 'pkgconfig' and
+      compiler.has_function('ovirt_api_search_vms', dependencies : ovirt_dep) and
       compiler.has_function('ovirt_vm_get_host', dependencies : ovirt_dep) and
       compiler.has_function('ovirt_host_get_cluster', dependencies : ovirt_dep) and
       compiler.has_function('ovirt_cluster_get_data_center', dependencies : ovirt_dep))
