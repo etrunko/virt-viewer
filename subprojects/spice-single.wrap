@@ -1,0 +1,4 @@
+[wrap-git]
+directory=spice-single
+url=https://gitlab.freedesktop.org/etrunko/spice-single.git
+revision=master

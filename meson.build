@@ -124,9 +124,9 @@ endif
 
 # spice-gtk
 virt_viewer_has_spice_gtk = false
-spice_protocol_dep = dependency('spice-protocol', version : spice_protocol_required, required : get_option('spice-gtk'))
-spice_glib_dep = dependency('spice-client-glib-2.0', version : spice_gtk_required, required : get_option('spice-gtk'))
-spice_gtk_dep = dependency('spice-client-gtk-3.0', version : spice_gtk_required, required : get_option('spice-gtk'))
+spice_protocol_dep = dependency('#spice-protocol', version : spice_protocol_required, required : get_option('spice-gtk'), fallback : ['spice-single', 'spice_protocol_dep'])
+spice_glib_dep = dependency('#spice-client-glib-2.0', version : spice_gtk_required, required : get_option('spice-gtk'), fallback : ['spice-single', 'spice_client_glib_dep'])
+spice_gtk_dep = dependency('#spice-client-gtk-3.0', version : spice_gtk_required, required : get_option('spice-gtk'), fallback : ['spice-single', 'spice_client_gtk_dep'])
 
 if spice_protocol_dep.found() and spice_glib_dep.found() and spice_gtk_dep.found()
   virt_viewer_deps += [spice_protocol_dep, spice_glib_dep, spice_gtk_dep]
